@@ -1,2 +1,3 @@
 .vscode
 *workspace
+__pycache__
