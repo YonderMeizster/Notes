@@ -1,0 +1,15 @@
+<body>
+    <form action="/users" method="get">
+        <input type="search" required name="name" placeholder="Нужен пользователь?">
+        <input type="submit" value="Искать">
+    </form>
+    <p></p>
+    <table>
+        {% for user in users %}
+        <tr>
+            <td>*</td>
+            <td>{{ user }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
