@@ -1,0 +1,11 @@
+<body>
+    <a href="/users/new">Регистрация нового пользователя</a>
+    <table>
+        {%for key in users%}
+        <tr>
+            <td>{{key}}</td>
+            <td>{{users[key]}}</td>
+        </tr>
+        {%endfor%}
+    </table>
+</body>

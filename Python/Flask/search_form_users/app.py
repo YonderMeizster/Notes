@@ -13,6 +13,7 @@ def index():
 @app.route('/users')
 def get_users():
     part = request.args.get('name')
+
     applied_users = []
     if part is not None:
         applied_users = [user for user in users if part in user]

@@ -421,3 +421,167 @@ def list():
   формы и отправляются на сервер. В случае get запроса, данные пристыковываются
   к URI action после '?' и туда отправляется get- запрос.
 
+## Персистентность
+
+Персистентность - характеристика, обозначающая способность к долговременному
+хранению. В ВЭБе для долговременного хранения используются по большей мере базы
+данных, реляционные и не только, в общем- то, каждая под свои цели.
+
+В качестве интерфейса к базе данных из ЯП выступают такие сущности, как:
+- библиотека, предназначенная для работы с БД;
+- ORM, представляющую БД как сущность, а хранящиеся данные как классы.
+
+Существует возможность хранить данные в сессии. Сессия представляет собой
+надстройку на Cookies. Данные хранятся в браузере пользователя.
+
+## Модифицирующие формы
+
+Такими формами называются формы. отправляющие POST- запрос на сервер. Они
+устроены сложнее. Для работы с такой формой необходимо реализовать два
+обработчика: один для GET запроса, другой для POST запроса.
+
+К примеру, маршруты для формы регистрации пользователя:
+- GET /users/new;
+- POST /users.
+
+Первый маршрут выводит пользователю форму регистрации. Форма отправляется в
+качестве POST запроса на /users.
+
+Опишем форму:
+```
+<form action="/users" method="post">
+    <div>
+      <label>
+        Имя
+        <input type="text" name="name">
+      </label>
+    </div>
+    <div>
+      <label>
+        Email
+        <input type="email" required name="email">
+      </label>
+      </div>
+    <div>
+      <label>
+        Пароль
+        <input type="password" required name="password">
+      </label>
+      </div>
+    <div>
+      <label>
+        Подтверждение пароля
+        <input type="password" required name="passwordConfirmation">
+      </label>
+    </div>
+    <div>
+      <label>
+        Город
+        <select name="city">
+          <option value="3">Москва</option>
+          <option value="13">Пенза</option>
+          <option  value="399">Томск</option>
+        </select>
+      </label>
+    </div>
+    <input type="submit" value="Sign Up">
+  </form>
+```
+
+Теперь необходимо написать обработчик под этот запрос. Первым делом необходимо
+как- то извлечь данные из формы. А сделать это можно двумя способами:
+
+```
+user = request.form.to_dict()
+```
+
+А также:
+
+```
+param = request.form.get(...)
+```
+
+В первом случае вся форма конвертируется в стандартный питоновский dict, а во
+втором из формы можно "дергать" параметры по одному.
+
+По- хорошему, полученные данные необходимо провалидировать. Этим займется
+псевдо- функция validate(). Псевдо-функция она потому, что не реализована :-)
+
+```
+errors = validate(user)
+```
+
+Если в форме не оказалось никаких ошибок, данные из неё следует сохранить в
+куда- нибудь с помощью функции save(), а пользователя перенаправить в куда- то.
+Для этого необходимо вернуть результат вызова функции redirect():
+
+```
+database.save(user)
+return redirect('/users', code=302)
+```
+
+В случае, если данные не верны- следует вернуть пользователю страницу с формой,
+а также отобразить те места, которые не прошли валдиацию:
+
+```
+if errors:
+    return render_template(
+        'users/new_user.html',
+        user=user,
+        errors=errors
+    )
+```
+
+Подобным образом можно изменить форму, чтобы она могла работать в таком режиме:
+```
+<form action="/users" method="post">
+  <div>
+    <label>
+      Имя
+      <input type="text" name="name" value="{{ user.name }}">
+    </label>
+    {% if errors['name'] %}
+      <div>{{ errors['name'] }}</div>
+    {% endif %}
+  </div>
+  <div>
+    <label>
+      Email
+      <input type="email" required name="email" value="{{ user.email }}">
+    </label>
+    {% if errors['email'] %}
+      <div>{{ errors['email'] }}</div>
+    {% endif %}
+    </div>
+  <div>
+    <label>
+      Пароль
+      <input type="password" required name="password" value="{{ user.password }}">
+    </label>
+    {% if errors['password'] %}
+      <div>{{ errors['password'] }}</div>
+    {% endif %}
+    </div>
+  <div>
+    <label>
+      Подтверждение пароля
+      <input type="password" required name="passwordConfirmation" value="{{ user.passwordConfirmation }}">
+    </label>
+  </div>
+  <div>
+    <label>
+      Город
+      <select name="city">
+        <option value="">Select</option>
+        <option {{ 'selected' if city == 3  else '' }} value="3">Москва</option>
+        <option {{ 'selected' if city == 13  else '' }} value="13">Пенза</option>
+        <option {{ 'selected' if city == 399 else '' }} value="399">Томск</option>
+      </select>
+    </label>
+    {% if errors['city'] %}
+      <div>{{ errors['city'] }}</div>
+    {% endif %}
+  </div>
+  <input type="submit" value="Sign Up">
+</form>
+```
