@@ -2,9 +2,11 @@ from flask import *
 import json
 
 
+with open('user_data/users', "w") as json_users:
+    json_users.write("[]")
+
+
 app = Flask(__name__)
-with open('user_data/users', "w") as _:
-    pass
 
 
 id_count = 0
@@ -18,26 +20,30 @@ def get_reg_form():
 @app.post('/users')
 def reg_user():
     global id_count
-    with open('user_data/users', "r+") as json_users:
-        data = json_users.read()
-        new_user = request.form.to_dict()
 
-        if len(data) == 0:
-            json_users.write(json.dumps(new_user))
-            return redirect('/', 302)
+    characterisic = request.form.to_dict()
+    characterisic['id'] = id_count
+    id_count += 1
 
-        curr_users = json.loads(data)
-        curr_users[id_count] = new_user
-        id_count += 1
-        json_users.write(json.dumps(curr_users))
+    with open('user_data/users', "r") as json_users:
+        users: list = json.loads(json_users.read())
+
+    users.append(characterisic)
+
+    with open('user_data/users', "w") as json_users:
+        json_users.write(json.dumps(users))
+
     return redirect('/', 302)
 
 
 @app.get('/')
 def ind():
     with open('user_data/users', "r") as json_users:
-        data = json_users.read()
-        if len(data) == 0:
-            return render_template('index.html', users=[])
-        users = json.loads(data)
+        chars = json_users.read()
+
+        try:
+            users = json.loads(chars)
+        except Exception:
+            users = []
+
     return render_template('index.html', users=users)
